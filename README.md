@@ -1,6 +1,6 @@
 A quick and dirty visualization of the results from dev.to's "State of the Web" survey.
 
-[https://martyhimmel.github.io/DEV-state-of-the-web-2018/](View results)
+[View results](https://martyhimmel.github.io/DEV-state-of-the-web-2018/)
 
 The `surveyresults.csv` file has the original data from the [Call for Analysis](https://dev.to/devteam/state-of-the-web-data---call-for-analysis-2o75) post.
 
