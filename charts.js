@@ -3,7 +3,7 @@ fetch('results.json')
     return res.json();
 })
 .then(results => {
-    google.charts.load('current', {packages: ['corechart']});
+    google.charts.load('current', {packages: ['bar']});
     google.charts.setOnLoadCallback(() => {
         createCharts(results);
     });
@@ -49,11 +49,70 @@ function drawChart(question, answers, div) {
             answer.count
         ];
     });
+    processData(rows);
     data.addRows(rows);
-    let chartOptions = {
-        title: question,
-        height: 500,
-    };
-    let chart = new google.visualization.PieChart(div);
-    chart.draw(data, chartOptions);
+    let options = {
+        chart: {
+            title: question
+        },
+        bars: 'horizontal',
+        height: 400,
+        width: 800,
+        bar: {
+            groupWidth: 50
+        },
+        legend: {
+            position: 'none'
+        },
+        vAxis: {
+            title: ''
+        }
+        // colors: colors
+    }
+    const chart = new google.charts.Bar(div);
+    chart.draw(data, google.charts.Bar.convertOptions(options));
+}
+
+function processData(rows) {
+    if (isYesNoQuestion(rows)) {
+        rows[0][0] = 'No';
+        rows[1][0] = 'Yes';
+    } else if (isRatingQuestion(rows)) {
+        return;
+    } else if (isRangeQuestion(rows)) {
+        return;
+    }
+    rows.sort((a, b) => b[1] - a[1]);
+}
+
+function isYesNoQuestion(rows) {
+    return isOrderedQuestion(rows, 2);
+}
+
+function isRatingQuestion(rows) {
+    return isOrderedQuestion(rows, 11);
+}
+
+function isOrderedQuestion(rows, count) {
+    if (rows.length !== count) {
+        return false;
+    }
+    for (let i=0; i<count; i++) {
+        if (rows[i][0] !== i.toString()) {
+            return false;
+        }
+    }
+    return true;
+}
+
+function isRangeQuestion(rows) {
+    if (rows[0][0] === '18 - 24') {
+        return true;
+    }
+    const values = rows.map(r => parseInt(r[0]));
+    const numbers = values.filter(v => !isNaN(v));
+    if (numbers.length === rows.length) {
+        return true;
+    }
+    return false;
 }
