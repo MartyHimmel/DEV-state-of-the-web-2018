@@ -16,7 +16,7 @@ function createCharts(results) {
         let answers = parseAnswers(response.answers);
         let div = createChartContainer(index);
         document.querySelector('.charts-container').appendChild(div);
-        drawChart(response.question, answers, div);
+        drawChart(question, answers, div);
     });
     document.querySelector('.notification').remove();
 }
@@ -49,7 +49,12 @@ function drawChart(question, answers, div) {
             answer.count
         ];
     });
-    processData(rows);
+    if (question.indexOf("How long have you") > -1) {
+        // special case the question that should have been a range in the first place
+        rows = aggregateToRanges(rows);
+    } else {
+        processData(rows);
+    }
     data.addRows(rows);
     let options = {
         chart: {
@@ -115,4 +120,49 @@ function isRangeQuestion(rows) {
         return true;
     }
     return false;
+}
+
+function createRangeLabel(start, finish) {
+    if (finish === Number.MAX_SAFE_INTEGER) {
+        return `Immortal time-traveller`;
+    }
+    return `${start}-${finish} years`;
+}
+
+function aggregateToRanges(rows) {
+    const ranges = [0, 1, 2, 5, 10, 20, 30, 40, 50, Number.MAX_SAFE_INTEGER];
+    const aggregateRows = [];
+    const addAggregateRow = (range) => {
+        aggregateRows.push([createRangeLabel(range.start, range.end), range.sum])
+    }
+    let currentRangeIndex = 0;
+    let currentRange;
+    rows.forEach((r, i) => {
+        const value = parseInt(r[0]);
+        const count = r[1];
+        for (; value >= ranges[currentRangeIndex+1] ;) {
+            currentRangeIndex++;
+            if (currentRangeIndex >= ranges.length) {
+                throw new Error(`Whatever you said plus one!`);
+            }
+        }
+        let currentStart = ranges[currentRangeIndex];
+        let currentEnd = ranges[currentRangeIndex+1];
+        if (currentRange && currentRange.start < currentStart) {
+            addAggregateRow(currentRange);
+            currentRange = null;
+        }
+        if (!currentRange) {
+            currentRange = {
+                start: currentStart,
+                end: currentEnd,
+                sum: 0
+            };
+        }
+        currentRange.sum += count;
+    });
+    if (currentRange) {
+        addAggregateRow(currentRange);
+    }
+    return aggregateRows;
 }
